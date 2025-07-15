@@ -48,18 +48,24 @@ compute_ustat <- function(Xr, cols, n1n2, group.size) {
 }
 
 
-compute_pval <- function(ustat, ties, N, n1n2) {
+compute_pval <- function(ustat, ties, N, n1n2, alternative) {
     z <- ustat - .5 * n1n2
-    z <- z - sign(z) * .5
+    CORRECTION <- switch(alternative,
+                         "two.sided" = sign(z) * 0.5,
+                         "greater" = 0.5,
+                         "less" = -0.5)
     .x1 <- N ^ 3 - N
     .x2 <- 1 / (12 * (N^2 - N))
     rhs <- lapply(ties, function(tvals) {
         (.x1 - sum(tvals ^ 3 - tvals)) * .x2
     }) %>% unlist
     usigma <- sqrt(matrix(n1n2, ncol = 1) %*% matrix(rhs, nrow = 1))
-    z <- t(z / usigma)
-
-    pvals <- matrix(2 * pnorm(-abs(as.numeric(z))), ncol = ncol(z))
+    z <- t((z - CORRECTION) / usigma)
+    pvals <- switch(alternative,
+        "greater" = matrix(stats::pnorm(as.numeric(z), lower.tail = FALSE), ncol = ncol(z)),
+        "two.sided" = matrix(2 * stats::pnorm(-abs(as.numeric(z))), ncol = ncol(z)),
+        "less" = matrix(stats::pnorm(as.numeric(z), lower.tail = TRUE), ncol = ncol(z))
+    )
     return(pvals)
 }
 
