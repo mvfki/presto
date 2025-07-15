@@ -132,7 +132,8 @@ wilcoxauc.SingleCellExperiment <- function(
 
 #' @rdname wilcoxauc
 #' @export
-wilcoxauc.default <- function(X, y, groups_use = NULL, verbose = TRUE, ...) {
+wilcoxauc.default <- function(X, y, groups_use = NULL, alternative = c("two.sided", "greater", "less"), verbose = TRUE, ...) {
+    alternative <- match.arg(alternative)
     ## Check and possibly correct input values
     if (is(X, "dgeMatrix")) X <- as.matrix(X)
     if (is(X, "data.frame")) X <- as.matrix(X)
@@ -175,7 +176,7 @@ wilcoxauc.default <- function(X, y, groups_use = NULL, verbose = TRUE, ...) {
 
     ustat <- compute_ustat(rank_res$X_ranked, y, n1n2, group.size)
     auc <- t(ustat / n1n2)
-    pvals <- compute_pval(ustat, rank_res$ties, ncol(X), n1n2)
+    pvals <- compute_pval(ustat, rank_res$ties, ncol(X), n1n2, alternative)
     fdr <- apply(pvals, 2, function(x) p.adjust(x, "BH"))
 
     ### Auxiliary Statistics (AvgExpr, PctIn, LFC, etc)
